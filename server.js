@@ -1,4 +1,5 @@
 import fastify from "fastify";
+import cors from "@fastify/cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { AsyncDatabase } from "promised-sqlite3";
@@ -10,7 +11,17 @@ const server = fastify({
     },
   },
 });
-
+// CORS: allow your Netlify app and local dev
+await server.register(cors, {
+  origin: [
+    "https://resilient-dolphin-5c9b1d.netlify.app",
+    "http://localhost:5173",
+  ],
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  // credentials: true, // <-- ONLY if you use cookies/auth; then remove "*" origins
+  maxAge: 600, // cache preflight for 10 minutes
+});
 const PORT = process.env.PORT || 3000;
 const HOST = "RENDER" in process.env ? `0.0.0.0` : `localhost`;
 
@@ -204,16 +215,16 @@ server.post("/api/order", async function createOrder(req, res) {
   }
 });
 
-server.addHook("preHandler", (req, res, done) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST");
-  res.header("Access-Control-Allow-Headers", "*");
-  const isPreflight = /options/i.test(req.method);
-  if (isPreflight) {
-    return res.send();
-  }
-  done();
-});
+// server.addHook("preHandler", (req, res, done) => {
+//   res.header("Access-Control-Allow-Origin", "*");
+//   res.header("Access-Control-Allow-Methods", "GET, POST");
+//   res.header("Access-Control-Allow-Headers", "*");
+//   const isPreflight = /options/i.test(req.method);
+//   if (isPreflight) {
+//     return res.send();
+//   }
+//   done();
+// });
 
 server.get("/api/past-orders", async function getPastOrders(req, res) {
   try {
